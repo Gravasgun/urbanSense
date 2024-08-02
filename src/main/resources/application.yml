@@ -8,3 +8,10 @@ spring:
 mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml
   type-aliases-package: com.cqupt.urbansense.bean
+
+minio:
+  accessKey: minio
+  secretKey: minio123
+  bucket: urbansense
+  endpoint: http://47.108.25.63:9001
+  readPath: http://47.108.25.63:9001
