@@ -12,8 +12,13 @@ public class User {
     /**
      * 主键，自增
      */
-    @TableId(value = "user_id",type = IdType.AUTO)
-    private Integer userId;
+    @TableId(value = "id",type = IdType.AUTO)
+    private Integer id;
+    /**
+     * 微信用户的union_id
+     */
+    @TableField("union_id")
+    private String unionId;
     /**
      * 平台ID
      */

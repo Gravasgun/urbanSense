@@ -18,10 +18,10 @@ public class Issue {
     @TableId(value = "issue_id",type = IdType.AUTO)
     private Integer issueId;
     /**
-     * 用户ID，外键，关联到User表
+     * 微信用户union_id
      */
-    @TableField("user_id")
-    private int userId;
+    @TableField("union_id")
+    private int unionId;
     /**
      * 问题分类
      */
