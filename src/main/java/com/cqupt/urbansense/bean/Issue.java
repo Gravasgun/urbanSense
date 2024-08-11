@@ -15,13 +15,18 @@ public class Issue {
     /**
      * 问题ID，主键，自增
      */
-    @TableId(value = "issue_id",type = IdType.AUTO)
+    @TableId(value = "issue_id", type = IdType.AUTO)
     private Integer issueId;
     /**
      * 微信用户union_id
      */
     @TableField("union_id")
-    private int unionId;
+    private String unionId;
+    /**
+     * 平台id
+     */
+    @TableField("platform_id")
+    private int platformId;
     /**
      * 问题分类
      */

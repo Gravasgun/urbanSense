@@ -22,11 +22,6 @@ public class Classification {
     @TableField("classification_name")
     private String classificationName;
     /**
-     * 分类描述（可选）
-     */
-    @TableField("description")
-    private String description;
-    /**
      * 创建时间
      */
     @TableField("created_time")

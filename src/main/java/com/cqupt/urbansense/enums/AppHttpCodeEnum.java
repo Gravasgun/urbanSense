@@ -20,7 +20,10 @@ public enum AppHttpCodeEnum {
     SERVER_ERROR(503, "服务器内部错误"),
     // 数据错误 1000~2000
     DATA_EXIST(1000, "数据已经存在"),
-    AP_USER_DATA_NOT_EXIST(1001, "ApUser数据不存在"),
+    WECHAT_USER_DATA_NOT_EXIST(1001, "微信用户数据不存在"),
+    PLATFORM_ID_DOT_EXIST(1002,"平台ID不存在"),
+    CLASSIFICATION_DOT_EXIST(1003,"问题分类不能为空"),
+    DESCRIPTION_DOT_EXIST(1004,"问题描述不能为空"),
     DATA_NOT_EXIST(1002, "数据不存在"),
     // 数据错误 3000~3500
     NO_OPERATOR_AUTH(3000, "无权限操作"),

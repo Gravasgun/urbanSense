@@ -1,6 +1,7 @@
 package com.cqupt.urbansense.controller;
 
 import com.cqupt.urbansense.bean.Issue;
+import com.cqupt.urbansense.dtos.IssueDto;
 import com.cqupt.urbansense.service.IssueService;
 import com.cqupt.urbansense.utils.ResponseResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ public class IssueController {
     private IssueService issueService;
 
     @PostMapping("/save")
-    public ResponseResult saveIssue(@RequestBody Issue issue, MultipartFile multipartFile) {
-        return issueService.saveIssue(issue, multipartFile);
+    public ResponseResult saveIssue(@RequestBody IssueDto issueDto, MultipartFile multipartFile) {
+        return issueService.saveIssue(issueDto, multipartFile);
     }
 }

@@ -20,11 +20,6 @@ public class User {
     @TableField("union_id")
     private String unionId;
     /**
-     * 平台ID
-     */
-    @TableField("platform_id")
-    private int platformId;
-    /**
      * 用户名称
      */
     @TableField("username")

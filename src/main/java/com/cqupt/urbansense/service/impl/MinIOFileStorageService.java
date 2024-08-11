@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,6 +22,7 @@ import java.util.Date;
 @Slf4j
 @EnableConfigurationProperties(MinIOConfigProperties.class)
 @Import(MinIOConfig.class)
+@Service
 public class MinIOFileStorageService implements FileStorageService {
     @Autowired
     private MinioClient minioClient;
@@ -38,7 +40,7 @@ public class MinIOFileStorageService implements FileStorageService {
      * @return 生成的完整存放路径
      */
     public String builderFilePath(String filename, boolean isPhoto) {
-        StringBuilder stringBuilder = new StringBuilder(50);
+        StringBuilder stringBuilder = new StringBuilder();
         // 根据文件类型选择目录前缀
         String typeDir = isPhoto ? PHOTO_DIR : VIDEO_DIR;
         stringBuilder.append(typeDir).append(separator);
