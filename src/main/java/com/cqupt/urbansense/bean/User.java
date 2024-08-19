@@ -6,19 +6,28 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Date;
+
 @Data
 @TableName("user")
-public class User {
+public class User implements Serializable {
     /**
      * 主键，自增
      */
-    @TableId(value = "id",type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     /**
      * 微信用户的union_id
      */
     @TableField("union_id")
     private String unionId;
+    /**
+     * 微信小程序中用户的open_id
+     */
+    @TableField("open_id")
+    private String openId;
     /**
      * 用户名称
      */
@@ -34,4 +43,6 @@ public class User {
      */
     @TableField("email")
     private String email;
+    @TableField("created_time")
+    private Date createdTime;
 }

@@ -5,6 +5,7 @@ public enum AppHttpCodeEnum {
     SUCCESS(200, "操作成功"),
     // 登录段1~50
     NEED_LOGIN(1, "需要登录后操作"),
+    LOGIN_FAILED(2, "登录失败"),
     LOGIN_PASSWORD_ERROR(2, "密码错误"),
     // TOKEN50~100
     TOKEN_INVALID(50, "无效的TOKEN"),
@@ -21,9 +22,9 @@ public enum AppHttpCodeEnum {
     // 数据错误 1000~2000
     DATA_EXIST(1000, "数据已经存在"),
     WECHAT_USER_DATA_NOT_EXIST(1001, "微信用户数据不存在"),
-    PLATFORM_ID_DOT_EXIST(1002,"平台ID不存在"),
-    CLASSIFICATION_DOT_EXIST(1003,"问题分类不能为空"),
-    DESCRIPTION_DOT_EXIST(1004,"问题描述不能为空"),
+    PLATFORM_ID_DOT_EXIST(1002, "平台ID不存在"),
+    CLASSIFICATION_DOT_EXIST(1003, "问题分类不能为空"),
+    DESCRIPTION_DOT_EXIST(1004, "问题描述不能为空"),
     DATA_NOT_EXIST(1002, "数据不存在"),
     // 数据错误 3000~3500
     NO_OPERATOR_AUTH(3000, "无权限操作"),
@@ -32,6 +33,7 @@ public enum AppHttpCodeEnum {
     CHANNEL_USED(3003, "频道已被启用，不可删除"),
     // 自媒体文章错误 3501~3600
     MATERIAL_REFERENCE_FAIL(3501, "素材引用失效");
+
 
     int code;
     String errorMessage;

@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
 @TableName("platforms")
-public class Platforms {
+public class Platforms implements Serializable {
     /**
      * 平台ID，主键，自增
      */
