@@ -5,8 +5,10 @@ import com.cqupt.urbansense.bean.User;
 import com.cqupt.urbansense.dtos.UserLoginDto;
 import com.cqupt.urbansense.utils.ResponseResult;
 
+import java.util.Map;
+
 public interface UserService extends IService<User> {
     ResponseResult saveUser(User user);
 
-    User wxLogin(UserLoginDto userLoginDto);
+    ResponseResult wxLogin(UserLoginDto userLoginDto);
 }

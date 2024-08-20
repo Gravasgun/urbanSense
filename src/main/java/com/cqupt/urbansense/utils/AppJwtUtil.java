@@ -8,8 +8,8 @@ import java.util.*;
 
 public class AppJwtUtil {
 
-    // TOKEN的有效期一小时（S）
-    private static final int TOKEN_TIME_OUT = 3_600;
+    // TOKEN的有效期两小时（S）
+    private static final int TOKEN_TIME_OUT = 7_200;
     // 加密KEY
     private static final String TOKEN_ENCRY_KEY = "MDk4ZjZiY2Q0NjIxZDM3M2NhZGU0ZTgzMjYyN2I0ZjY";
     // 最小刷新间隔(S)

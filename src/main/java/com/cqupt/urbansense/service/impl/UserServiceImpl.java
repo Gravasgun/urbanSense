@@ -7,12 +7,16 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cqupt.urbansense.bean.User;
 import com.cqupt.urbansense.bean.WeChatProperties;
 import com.cqupt.urbansense.dtos.UserLoginDto;
+import com.cqupt.urbansense.dtos.UserLoginVO;
 import com.cqupt.urbansense.mapper.UserMapper;
 import com.cqupt.urbansense.service.UserService;
+import com.cqupt.urbansense.utils.AppJwtUtil;
 import com.cqupt.urbansense.utils.ResponseResult;
+import com.mysql.jdbc.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -23,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Transactional
@@ -36,6 +41,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private WeChatProperties weChatProperties;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     @Override
     public ResponseResult saveUser(User user) {
@@ -48,7 +55,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param userLoginDTO
      * @return
      */
-    public User wxLogin(UserLoginDto userLoginDTO) {
+    public ResponseResult wxLogin(UserLoginDto userLoginDTO) {
         Map<String, String> map = getWechatInformation(userLoginDTO.getCode());
         //判断openid是否为空，如果为空表示登录失败，抛出异常
         String openId = map.get("openId");
@@ -64,14 +71,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             user = new User();
             user.setOpenId(openId);
             String unionId = map.get("unionId");
-            if (StringUtils.isNotBlank(unionId)){
+            if (StringUtils.isNotBlank(unionId)) {
                 user.setUnionId(map.get("unionId"));
             }
             user.setCreatedTime(Date.from(Instant.from(LocalDateTime.now())));
             userMapper.insert(user);
         }
-        //返回这个用户对象
-        return user;
+        //为微信用户生成jwt令牌
+        String token = AppJwtUtil.getToken(user.getId().longValue());
+        UserLoginVO userLoginVO = UserLoginVO.builder()
+                .id(user.getId().longValue())
+                .openid(user.getOpenId())
+                .token(token)
+                .build();
+        //缓存token
+        redisTemplate.opsForValue().set("token", map.get("sessionKey"), 2, TimeUnit.HOURS);
+        //返回结果
+        return ResponseResult.okResult(userLoginVO);
     }
 
     /**
@@ -95,11 +111,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .queryParam("grant_type", map.get("grant_type"))
                 .toUriString();
         //发送http请求
-        String json = restTemplate.getForObject(url, String.class);
-        JSONObject jsonObject = JSON.parseObject(json);
-        String openId = jsonObject.getString("openid");
-        String unionId = jsonObject.getString("unionid");
-        String sessionKey = jsonObject.getString("session_key");
+        String responseJson = restTemplate.getForObject(url, String.class);
+        JSONObject response = JSON.parseObject(responseJson);
+        log.info("微信登录接口请求结果：" + response);
+        String openId = response.getString("openid");
+        String unionId = response.getString("unionid");
+        String sessionKey = response.getString("session_key");
         //返回请求体中的数据
         Map<String, String> resultMap = new HashMap<>();
         resultMap.put("openId", openId);
