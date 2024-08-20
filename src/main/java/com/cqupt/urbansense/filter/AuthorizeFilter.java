@@ -7,63 +7,64 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
-import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Mono;
 
-@Component
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 @Slf4j
-public class AuthorizeFilter implements Ordered, WebFilter {
+public class AuthorizeFilter implements Filter, Ordered {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        ServerHttpResponse response = exchange.getResponse();
-        log.info("filter uri: {}", request.getURI());
-        //获取uri
-        String path = request.getURI().getPath();
-        //如果是登录请求 直接放行
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        HttpServletResponse response = (HttpServletResponse) servletResponse;
+        String path = request.getRequestURI();
+        log.info("filter path:{}", path);
+        // 如果是登录请求，直接放行
         if (path.contains("/login")) {
-            return chain.filter(exchange);
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
         }
-        //不是登录请求 获取token
-        String token = request.getHeaders().getFirst("token");
-        //如果token为空 设置401状态码
+        // 获取 token
+        String token = request.getHeader("token");
+        // 如果 token 为空，设置 401 状态码并结束响应
         if (StringUtils.isBlank(token)) {
-            response.setStatusCode(HttpStatus.UNAUTHORIZED);
-            return response.setComplete();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
-        //token不为空 校验token
+        // 校验 token
         try {
             Claims claimsBody = AppJwtUtil.getClaimsBody(token);
             int result = AppJwtUtil.verifyToken(claimsBody);
-            String redisToken = (String) redisTemplate.opsForValue().get("token");
-            //token过期
-            if ((result == 1 || result == 2) && StringUtils.isBlank(redisToken)) {
-                response.setStatusCode(HttpStatus.UNAUTHORIZED);
-                return response.setComplete();
+            String storedToken = redisTemplate.opsForValue().get("token");
+            //token无效或者redis中的accessKey不存在或过期
+            if ((result == 1 || result == 2) && StringUtils.isBlank(storedToken)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            response.setStatusCode(HttpStatus.UNAUTHORIZED);
-            return response.setComplete();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
-        //token有效 直接放行
-        return chain.filter(exchange);
+        // token 有效，放行请求
+        filterChain.doFilter(servletRequest, servletResponse);
     }
 
-    /**
-     * 优先级设置 值越小 优先级越高
-     *
-     * @return
-     */
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        // 初始化代码
+    }
+
+    @Override
+    public void destroy() {
+        // 释放资源
+    }
+
     @Override
     public int getOrder() {
         return 0;
