@@ -74,7 +74,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (StringUtils.isNotBlank(unionId)) {
                 user.setUnionId(map.get("unionId"));
             }
-            user.setCreatedTime(Date.from(Instant.from(LocalDateTime.now())));
+            user.setCreatedTime(new Date());
             userMapper.insert(user);
         }
         //为微信用户生成jwt令牌
@@ -85,7 +85,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .token(token)
                 .build();
         //缓存token
-        redisTemplate.opsForValue().set("token", map.get("sessionKey"), 2, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(user.getId() + "token", map.get("sessionKey"), 2, TimeUnit.HOURS);
         //返回结果
         return ResponseResult.okResult(userLoginVO);
     }

@@ -1,6 +1,7 @@
 package com.cqupt.urbansense.utils;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -101,9 +102,9 @@ public class AppJwtUtil {
      * @return
      */
     public static SecretKey generalKey() {
-        byte[] encodedKey = Base64.getEncoder().encode(TOKEN_ENCRY_KEY.getBytes());
-        SecretKey key = new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES");
-        return key;
+        // 使用 Keys.secretKeyFor 生成符合 HS512 算法要求的密钥
+        return Keys.secretKeyFor(SignatureAlgorithm.HS512);
     }
+
 
 }
