@@ -11,6 +11,7 @@ import com.cqupt.urbansense.dtos.UserLoginVO;
 import com.cqupt.urbansense.mapper.UserMapper;
 import com.cqupt.urbansense.service.UserService;
 import com.cqupt.urbansense.utils.AppJwtUtil;
+import com.cqupt.urbansense.utils.AppThreadLocalUtil;
 import com.cqupt.urbansense.utils.ResponseResult;
 import com.mysql.jdbc.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +87,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .build();
         //缓存token
         redisTemplate.opsForValue().set(user.getId() + "token", map.get("sessionKey"), 2, TimeUnit.HOURS);
+        //将用户存入threadLocal，以便后续获取unionId
+        AppThreadLocalUtil.setUser(user);
         //返回结果
         return ResponseResult.okResult(userLoginVO);
     }

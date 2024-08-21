@@ -3,10 +3,12 @@ package com.cqupt.urbansense.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cqupt.urbansense.bean.Issue;
+import com.cqupt.urbansense.bean.User;
 import com.cqupt.urbansense.dtos.IssueDto;
 import com.cqupt.urbansense.enums.AppHttpCodeEnum;
 import com.cqupt.urbansense.mapper.IssueMapper;
 import com.cqupt.urbansense.service.IssueService;
+import com.cqupt.urbansense.utils.AppThreadLocalUtil;
 import com.cqupt.urbansense.utils.ResponseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +38,10 @@ public class IssueServiceImpl extends ServiceImpl<IssueMapper, Issue> implements
         if (issueDto == null) {
             return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
         }
-        if (StringUtils.isBlank(issueDto.getUnionId())) {
+        User user = AppThreadLocalUtil.getUser();
+        if (user != null && StringUtils.isNotBlank(user.getUnionId())) {
+            issueDto.setUnionId(user.getUnionId());
+        }else {
             return ResponseResult.errorResult(AppHttpCodeEnum.NEED_LOGIN, "请登录！");
         }
         if (issueDto.getPlatformId() == null) {
