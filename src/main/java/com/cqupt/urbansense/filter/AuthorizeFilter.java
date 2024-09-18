@@ -33,6 +33,7 @@ public class AuthorizeFilter implements Filter, Ordered {
         }
         // 获取 token
         String token = request.getHeader("token");
+        log.info("token:{}",token);
         // 如果 token 为空，设置 401 状态码并结束响应
         if (StringUtils.isBlank(token)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

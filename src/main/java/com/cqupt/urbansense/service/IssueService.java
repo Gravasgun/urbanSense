@@ -7,5 +7,5 @@ import com.cqupt.urbansense.utils.ResponseResult;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface IssueService extends IService<Issue> {
-    ResponseResult saveIssue(IssueDto issueDto, MultipartFile multipartFile);
+    ResponseResult saveIssue(IssueDto issueDto);
 }

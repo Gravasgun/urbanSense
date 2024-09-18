@@ -1,23 +1,33 @@
 package com.cqupt.urbansense.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
+import com.cqupt.urbansense.bean.Issue;
 import com.cqupt.urbansense.config.MinIOConfig;
 import com.cqupt.urbansense.config.MinIOConfigProperties;
+import com.cqupt.urbansense.enums.AppHttpCodeEnum;
+import com.cqupt.urbansense.mapper.IssueMapper;
 import com.cqupt.urbansense.service.FileStorageService;
-import io.minio.GetObjectArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
+import com.cqupt.urbansense.utils.ResponseResult;
+import io.minio.*;
+import io.minio.errors.MinioException;
+import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @EnableConfigurationProperties(MinIOConfigProperties.class)
@@ -28,6 +38,9 @@ public class MinIOFileStorageService implements FileStorageService {
     private MinioClient minioClient;
     @Autowired
     private MinIOConfigProperties minIOConfigProperties;
+
+    @Autowired
+    private IssueMapper issueMapper;
     private final static String separator = "/";
     private final static String PHOTO_DIR = "photo";
     private final static String VIDEO_DIR = "video";
@@ -56,28 +69,47 @@ public class MinIOFileStorageService implements FileStorageService {
     /**
      * 上传文件
      *
-     * @param filename    文件名
-     * @param inputStream 文件流
-     * @param isPhoto     是否为图片文件
-     * @return 文件全路径
+     * @param multipartFile
+     * @return
      */
     @Override
-    public String uploadFile(String filename, InputStream inputStream, boolean isPhoto) {
-        String filePath = builderFilePath(filename, isPhoto);
+    public ResponseResult uploadFile(MultipartFile multipartFile) {
+        // 1. 参数校验
+        if (multipartFile == null || multipartFile.getSize() == 0) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        // 2. 上传图片到 MinIO 中
+        // 文件名生成+拼接
+        String fileName = UUID.randomUUID().toString().replace("-", "");
+        String originalFilename = multipartFile.getOriginalFilename();
+        String postfix = originalFilename.substring(originalFilename.lastIndexOf("."));
+        Boolean isPhoto = false;
+        if (postfix.equals(".jpg") || postfix.equals(".jpeg") || postfix.equals(".png")) {
+            isPhoto = true;
+        }
+        String filePath = builderFilePath(fileName + postfix, isPhoto);
         try {
             String contentType = isPhoto ? "image/jpg" : "video/mp4";  // 根据文件类型设置内容类型
             PutObjectArgs putObjectArgs = PutObjectArgs.builder()
                     .object(filePath)
                     .contentType(contentType)
                     .bucket(minIOConfigProperties.getBucket())
-                    .stream(inputStream, inputStream.available(), -1)
+                    .stream(multipartFile.getInputStream(), multipartFile.getInputStream().available(), -1)
                     .build();
             minioClient.putObject(putObjectArgs);
-            StringBuilder urlPath = new StringBuilder(minIOConfigProperties.getReadPath());
-            urlPath.append(separator).append(minIOConfigProperties.getBucket());
-            urlPath.append(separator);
-            urlPath.append(filePath);
-            return urlPath.toString();
+
+            // 构建返回的 URL
+            String urlPath = new StringBuilder(minIOConfigProperties.getReadPath())
+                    .append(separator)
+                    .append(minIOConfigProperties.getBucket())
+                    .append(separator)
+                    .append(filePath)
+                    .toString();
+
+            // 使用 Map 来构建 JSON 数据
+            Map<String, String> responseData = new HashMap<>();
+            responseData.put("url", urlPath);
+            return ResponseResult.okResult(responseData);
         } catch (Exception ex) {
             log.error("minio put file error.", ex);
             throw new RuntimeException("上传文件失败");
@@ -138,5 +170,38 @@ public class MinIOFileStorageService implements FileStorageService {
             byteArrayOutputStream.write(buff, 0, rc);
         }
         return byteArrayOutputStream.toByteArray();
+    }
+
+    /**
+     * 清除不存在的文件
+     *
+     * @param pathUrl
+     * @return
+     */
+//    @PostConstruct
+//    @Scheduled(cron = "0 0 0 * * *")
+    @Override
+    public ResponseResult removeAbsenceFiles(String pathUrl) {
+        try {
+            // List objects in the bucket
+            Iterable<Result<Item>> myObjects = minioClient.listObjects("urbansense");
+            // search database file names
+            List<Issue> issueList = issueMapper.selectList(null);
+            List<String> photoUrlList = issueList.stream().map(Issue::getPhotoUrls).collect(Collectors.toList());
+            List<String> videoUrlList = issueList.stream().map(Issue::getVideoUrls).collect(Collectors.toList());
+            for (Result<Item> result : myObjects) {
+                Item item = result.get();
+                String objectName = item.objectName();
+                if (!photoUrlList.isEmpty() && !photoUrlList.contains(objectName)) {
+                    this.delete(objectName);
+                }
+                if (!videoUrlList.isEmpty() && !videoUrlList.contains(objectName)) {
+                    this.delete(objectName);
+                }
+            }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            System.err.println("Error occurred: " + e);
+        }
+        return ResponseResult.okResult("success！");
     }
 }

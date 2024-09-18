@@ -93,6 +93,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return ResponseResult.okResult(userLoginVO);
     }
 
+    @Override
+    public String getUnionId(User user) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getId, user.getId());
+        User targetUser = userMapper.selectOne(queryWrapper);
+        return targetUser.getUnionId();
+    }
+
     /**
      * 调用微信接口服务，获取微信用户的openid
      *

@@ -2,17 +2,20 @@ package com.cqupt.urbansense.utils;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.*;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import javax.crypto.SecretKey;
+import java.util.Base64;
 
 public class AppJwtUtil {
 
     // TOKEN的有效期两小时（S）
     private static final int TOKEN_TIME_OUT = 7_200;
     // 加密KEY
-    private static final String TOKEN_ENCRY_KEY = "MDk4ZjZiY2Q0NjIxZDM3M2NhZGU0ZTgzMjYyN2I0ZjY";
+    private static final String TOKEN_ENCRY_KEY = "yeidGo5Jd+V65aqANkIHNDAli0mU8g+AC8sPtfdwp+XbUZOFKshd+BIREIw9kdQJQbjrJjxOzXlDoY29vo9Q9A==";
     // 最小刷新间隔(S)
     private static final int REFRESH_TIME = 300;
 
@@ -96,15 +99,22 @@ public class AppJwtUtil {
         }
     }
 
-    /**
-     * 由字符串生成加密key
-     *
-     * @return
-     */
     public static SecretKey generalKey() {
-        // 使用 Keys.secretKeyFor 生成符合 HS512 算法要求的密钥
-        return Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        // 将 TOKEN_ENCRY_KEY 转换为字节数组
+        byte[] encodedKey = Base64.getDecoder().decode(TOKEN_ENCRY_KEY);
+        // 根据字节数组生成 SecretKey，使用 "HmacSHA512" 作为算法
+        return new SecretKeySpec(encodedKey, 0, encodedKey.length, "HmacSHA512");
     }
+
+
+
+        public static void main(String[] args) {
+            // 使用 HS512 算法生成一个至少 512 位的密钥
+            SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+            // 将密钥转换为 Base64 编码字符串
+            String base64Key = Base64.getEncoder().encodeToString(key.getEncoded());
+            System.out.println("Generated Key: " + base64Key);
+        }
 
 
 }

@@ -61,13 +61,13 @@ public class Issue implements Serializable {
     /**
      * 照片URL列表，JSON格式存储（如JSON数组）
      */
-    @TableField("photo_url")
-    private List<String> photoUrl;
+    @TableField("photo_urls")
+    private String photoUrls;
     /**
      * 视频URL列表，JSON格式存储（如JSON数组）
      */
     @TableField("video_urls")
-    private List<String> videoUrl;
+    private String videoUrls;
     /**
      * 提交时间
      */

@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class IssueDto implements Serializable {
     /**
-     * 微信用户union_id
+     * 微信用户UnionId
      */
     private String unionId;
     /**
@@ -37,9 +37,9 @@ public class IssueDto implements Serializable {
     /**
      * 照片URL列表，JSON格式存储（如JSON数组）
      */
-    private List<String> photoFileNames;
+    private List<String> photoFileUrls;
     /**
      * 视频URL列表，JSON格式存储（如JSON数组）
      */
-    private List<String> videoFileNames;
+    private List<String> videoFileUrls;
 }

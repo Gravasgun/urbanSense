@@ -1,6 +1,7 @@
 package com.cqupt.urbansense.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cqupt.urbansense.bean.Issue;
 import com.cqupt.urbansense.bean.User;
@@ -8,6 +9,7 @@ import com.cqupt.urbansense.dtos.IssueDto;
 import com.cqupt.urbansense.enums.AppHttpCodeEnum;
 import com.cqupt.urbansense.mapper.IssueMapper;
 import com.cqupt.urbansense.service.IssueService;
+import com.cqupt.urbansense.service.UserService;
 import com.cqupt.urbansense.utils.AppThreadLocalUtil;
 import com.cqupt.urbansense.utils.ResponseResult;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +18,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -31,17 +32,20 @@ import static com.cqupt.urbansense.constants.StatusConstant.NOT_DEAL;
 public class IssueServiceImpl extends ServiceImpl<IssueMapper, Issue> implements IssueService {
     @Autowired
     private MinIOFileStorageService fileStorageService;
+    @Autowired
+    private UserService userService;
 
     @Override
-    public ResponseResult saveIssue(IssueDto issueDto, MultipartFile multipartFile) {
+    public ResponseResult saveIssue(IssueDto issueDto) {
         //1.check param
         if (issueDto == null) {
             return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
         }
         User user = AppThreadLocalUtil.getUser();
-        if (user != null && StringUtils.isNotBlank(user.getUnionId())) {
-            issueDto.setUnionId(user.getUnionId());
-        }else {
+        String unionId = getUnionId(user);
+        if (user != null && StringUtils.isNotBlank(unionId)) {
+            issueDto.setUnionId(unionId);
+        } else {
             return ResponseResult.errorResult(AppHttpCodeEnum.NEED_LOGIN, "请登录！");
         }
         if (issueDto.getPlatformId() == null) {
@@ -60,40 +64,22 @@ public class IssueServiceImpl extends ServiceImpl<IssueMapper, Issue> implements
         issue.setStatus(NOT_DEAL);
         issue.setSubmittedTime(new Date());
         issue.setUpdatedTime(new Date());
-        List<String> photoFileNames = issueDto.getPhotoFileNames();
-        List<String> videoFileNames = issueDto.getVideoFileNames();
         //2.2 deal with files
-        List<String> photoUrlList = uploadFiles(photoFileNames, true, multipartFile);
-        List<String> videoUrlList = uploadFiles(videoFileNames, false, multipartFile);
-        issue.setPhotoUrl(photoUrlList);
-        issue.setVideoUrl(videoUrlList);
+        List<String> photoFileUrls = issueDto.getPhotoFileUrls();
+        List<String> videoFileUrls = issueDto.getVideoFileUrls();
+        if (CollectionUtils.isNotEmpty(photoFileUrls) && photoFileUrls.stream().allMatch(StringUtils::isNotBlank)) {
+            issue.setPhotoUrls(JSONObject.toJSONString(photoFileUrls));
+        }
+        if (CollectionUtils.isNotEmpty(videoFileUrls) && videoFileUrls.stream().allMatch(StringUtils::isNotBlank)) {
+            issue.setVideoUrls(JSONObject.toJSONString(videoFileUrls));
+        }
         //3.save bean to MySQL database
         this.save(issue);
         //4.return the result
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 
-    /**
-     * 文件上传封装
-     *
-     * @param filenameList
-     * @param isPhoto
-     * @param multipartFile
-     * @return
-     */
-    private List<String> uploadFiles(List<String> filenameList, Boolean isPhoto, MultipartFile multipartFile) {
-        List<String> pathUrlList = new ArrayList<>();
-        if (!filenameList.isEmpty()) {
-            for (String fileName : filenameList) {
-                try {
-                    String fileNameUrl = fileStorageService.uploadFile(fileName, multipartFile.getInputStream(), isPhoto);
-                    pathUrlList.add(fileNameUrl);
-                } catch (IOException e) {
-                    log.info("上传文件失败——" + multipartFile.getOriginalFilename());
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-        return pathUrlList;
+    private String getUnionId(User user) {
+        return userService.getUnionId(user);
     }
 }

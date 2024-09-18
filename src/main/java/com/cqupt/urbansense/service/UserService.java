@@ -11,4 +11,5 @@ public interface UserService extends IService<User> {
     ResponseResult saveUser(User user);
 
     ResponseResult wxLogin(UserLoginDto userLoginDto);
+    String getUnionId(User user);
 }
